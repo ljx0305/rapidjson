@@ -880,7 +880,7 @@ public:
 #define RAPIDJSON_STRING_(name, ...) \
     static const ValueType& Get##name##String() {\
         static const Ch s[] = { __VA_ARGS__, '\0' };\
-        static const ValueType v(s, sizeof(s) / sizeof(Ch) - 1);\
+        static const ValueType v(s, static_cast<SizeType>(sizeof(s) / sizeof(Ch) - 1));\
         return v;\
     }
 
@@ -1928,7 +1928,7 @@ private:
     const Context& CurrentContext() const { return *schemaStack_.template Top<Context>(); }
 
     OutputHandler& CreateNullHandler() {
-        return *(nullHandler_ = static_cast<OutputHandler*>(GetStateAllocator().Malloc(sizeof(OutputHandler))));
+        return *(nullHandler_ = new (GetStateAllocator().Malloc(sizeof(OutputHandler))) OutputHandler);
     }
 
     static const size_t kDefaultSchemaStackCapacity = 1024;

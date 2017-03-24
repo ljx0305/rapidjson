@@ -16,6 +16,7 @@
 #define RAPIDJSON_WRITER_H_
 
 #include "stream.h"
+#include "internal/meta.h"
 #include "internal/stack.h"
 #include "internal/strfunc.h"
 #include "internal/dtoa.h"
@@ -221,8 +222,9 @@ public:
 
     bool EndObject(SizeType memberCount = 0) {
         (void)memberCount;
-        RAPIDJSON_ASSERT(level_stack_.GetSize() >= sizeof(Level));
-        RAPIDJSON_ASSERT(!level_stack_.template Top<Level>()->inArray);
+        RAPIDJSON_ASSERT(level_stack_.GetSize() >= sizeof(Level)); // not inside an Object
+        RAPIDJSON_ASSERT(!level_stack_.template Top<Level>()->inArray); // currently inside an Array, not Object
+        RAPIDJSON_ASSERT(0 == level_stack_.template Top<Level>()->valueCount % 2); // Object has a Key without a Value
         level_stack_.template Pop<Level>(1);
         return EndValue(WriteEndObject());
     }
@@ -246,9 +248,9 @@ public:
     //@{
 
     //! Simpler but slower overload.
-    bool String(const Ch* str) { return String(str, internal::StrLen(str)); }
-    bool Key(const Ch* str) { return Key(str, internal::StrLen(str)); }
-
+    bool String(const Ch* const& str) { return String(str, internal::StrLen(str)); }
+    bool Key(const Ch* const& str) { return Key(str, internal::StrLen(str)); }
+    
     //@}
 
     //! Write a raw JSON value.
@@ -263,6 +265,14 @@ public:
         RAPIDJSON_ASSERT(json != 0);
         Prefix(type);
         return EndValue(WriteRawValue(json, length));
+    }
+
+    //! Flush the output stream.
+    /*!
+        Allows the user to flush the output stream immediately.
+     */
+    void Flush() {
+        os_->Flush();
     }
 
 protected:
@@ -471,7 +481,7 @@ protected:
     // Flush the value if it is the top level one.
     bool EndValue(bool ret) {
         if (RAPIDJSON_UNLIKELY(level_stack_.Empty()))   // end of json text
-            os_->Flush();
+            Flush();
         return ret;
     }
 

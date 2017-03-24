@@ -100,6 +100,19 @@ TEST(Writer, String) {
 #endif
 }
 
+TEST(Writer, Issue_889) {
+    char buf[100] = "Hello";
+    
+    StringBuffer buffer;
+    Writer<StringBuffer> writer(buffer);
+    writer.StartArray();
+    writer.String(buf);
+    writer.EndArray();
+    
+    EXPECT_STREQ("[\"Hello\"]", buffer.GetString());
+    EXPECT_TRUE(writer.IsComplete()); \
+}
+
 TEST(Writer, ScanWriteUnescapedString) {
     const char json[] = "[\" \\\"0123456789ABCDEF\"]";
     //                       ^ scanning stops here.
@@ -440,6 +453,28 @@ TEST(Writer, InvalidEventSequence) {
         Writer<StringBuffer> writer(buffer);
         writer.StartObject();
         EXPECT_THROW(writer.Int(1), AssertException);
+        EXPECT_FALSE(writer.IsComplete());
+    }
+
+    // { 'a' }
+    {
+        StringBuffer buffer;
+        Writer<StringBuffer> writer(buffer);
+        writer.StartObject();
+        writer.Key("a");
+        EXPECT_THROW(writer.EndObject(), AssertException);
+        EXPECT_FALSE(writer.IsComplete());
+    }
+
+    // { 'a':'b','c' }
+    {
+        StringBuffer buffer;
+        Writer<StringBuffer> writer(buffer);
+        writer.StartObject();
+        writer.Key("a");
+        writer.String("b");
+        writer.Key("c");
+        EXPECT_THROW(writer.EndObject(), AssertException);
         EXPECT_FALSE(writer.IsComplete());
     }
 }

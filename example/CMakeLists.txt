@@ -10,6 +10,7 @@ set(EXAMPLES
     filterkey
     filterkeydom
     jsonx
+    lookaheadparser
     messagereader
     parsebyparts
     pretty
@@ -18,6 +19,7 @@ set(EXAMPLES
     serialize
     simpledom
     simplereader
+    simplepullreader
     simplewriter
     tutorial)
     
