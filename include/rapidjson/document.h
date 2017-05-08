@@ -515,7 +515,7 @@ struct TypeHelper<ValueType, typename ValueType::Object> {
     static bool Is(const ValueType& v) { return v.IsObject(); }
     static ObjectType Get(ValueType& v) { return v.GetObject(); }
     static ValueType& Set(ValueType& v, ObjectType data) { return v = data; }
-    static ValueType& Set(ValueType& v, ObjectType data, typename ValueType::AllocatorType&) { v = data; }
+    static ValueType& Set(ValueType& v, ObjectType data, typename ValueType::AllocatorType&) { return v = data; }
 };
 
 template<typename ValueType> 
@@ -2293,7 +2293,7 @@ public:
     template <unsigned parseFlags, typename SourceEncoding>
     GenericDocument& Parse(const typename SourceEncoding::Ch* str, size_t length) {
         RAPIDJSON_ASSERT(!(parseFlags & kParseInsituFlag));
-        MemoryStream ms(static_cast<const char*>(str), length * sizeof(typename SourceEncoding::Ch));
+        MemoryStream ms(reinterpret_cast<const char*>(str), length * sizeof(typename SourceEncoding::Ch));
         EncodedInputStream<SourceEncoding, MemoryStream> is(ms);
         ParseStream<parseFlags, SourceEncoding>(is);
         return *this;
