@@ -439,6 +439,17 @@ TEST(Value, Int) {
     EXPECT_EQ(5678, z.Get<int>());
     EXPECT_EQ(5679, z.Set(5679).Get<int>());
     EXPECT_EQ(5680, z.Set<int>(5680).Get<int>());
+
+#ifdef _MSC_VER
+    // long as int on MSC platforms
+    RAPIDJSON_STATIC_ASSERT(sizeof(long) == sizeof(int));
+    z.SetInt(2222);
+    EXPECT_TRUE(z.Is<long>());
+    EXPECT_EQ(2222l, z.Get<long>());
+    EXPECT_EQ(3333l, z.Set(3333l).Get<long>());
+    EXPECT_EQ(4444l, z.Set<long>(4444l).Get<long>());
+    EXPECT_TRUE(z.IsInt());
+#endif
 }
 
 TEST(Value, Uint) {
@@ -485,6 +496,17 @@ TEST(Value, Uint) {
     EXPECT_EQ(2147483648u, z.Get<unsigned>());
     EXPECT_EQ(2147483649u, z.Set(2147483649u).Get<unsigned>());
     EXPECT_EQ(2147483650u, z.Set<unsigned>(2147483650u).Get<unsigned>());
+
+#ifdef _MSC_VER
+    // unsigned long as unsigned on MSC platforms
+    RAPIDJSON_STATIC_ASSERT(sizeof(unsigned long) == sizeof(unsigned));
+    z.SetUint(2222);
+    EXPECT_TRUE(z.Is<unsigned long>());
+    EXPECT_EQ(2222ul, z.Get<unsigned long>());
+    EXPECT_EQ(3333ul, z.Set(3333ul).Get<unsigned long>());
+    EXPECT_EQ(4444ul, z.Set<unsigned long>(4444ul).Get<unsigned long>());
+    EXPECT_TRUE(x.IsUint());
+#endif
 }
 
 TEST(Value, Int64) {
