@@ -20,6 +20,9 @@
 #ifdef __clang__
 RAPIDJSON_DIAG_PUSH
 RAPIDJSON_DIAG_OFF(variadic-macros)
+#elif defined(_MSC_VER)
+RAPIDJSON_DIAG_PUSH
+RAPIDJSON_DIAG_OFF(4822) // local class member function does not have a body
 #endif
 
 using namespace rapidjson;
@@ -2004,6 +2007,39 @@ TEST(SchemaValidator, Ref_remote) {
         SchemaValidatorType, PointerType);
 }
 
-#ifdef __clang__
+TEST(SchemaValidator, Ref_remote_issue1210) {
+    class SchemaDocumentProvider : public IRemoteSchemaDocumentProvider {
+        SchemaDocument** collection;
+
+        SchemaDocumentProvider(const SchemaDocumentProvider&);
+        SchemaDocumentProvider& operator=(const SchemaDocumentProvider&);
+
+        public:
+          SchemaDocumentProvider(SchemaDocument** collection) : collection(collection) { }
+          virtual const SchemaDocument* GetRemoteDocument(const char* uri, SizeType length) {
+            int i = 0;
+            while (collection[i] && SchemaDocument::URIType(uri, length) != collection[i]->GetURI()) ++i;
+            return collection[i];
+          }
+    };
+    SchemaDocument* collection[] = { 0, 0, 0 };
+    SchemaDocumentProvider provider(collection);
+
+    Document x, y, z;
+    x.Parse("{\"properties\":{\"country\":{\"$ref\":\"y.json#/definitions/country_remote\"}},\"type\":\"object\"}");
+    y.Parse("{\"definitions\":{\"country_remote\":{\"$ref\":\"z.json#/definitions/country_list\"}}}");
+    z.Parse("{\"definitions\":{\"country_list\":{\"enum\":[\"US\"]}}}");
+
+    SchemaDocument sz(z, "z.json", 6, &provider);
+    collection[0] = &sz;
+    SchemaDocument sy(y, "y.json", 6, &provider);
+    collection[1] = &sy;
+    SchemaDocument sx(x, "x.json", 6, &provider);
+
+    VALIDATE(sx, "{\"country\":\"UK\"}", false);
+    VALIDATE(sx, "{\"country\":\"US\"}", true);
+}
+
+#if defined(_MSC_VER) || defined(__clang__)
 RAPIDJSON_DIAG_POP
 #endif
